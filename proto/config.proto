@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package proto;
+
+// server sends data to clients
+// this data contains a key that server uses to track a job
+message Data {
+    repeated string tokens = 1;
+    string key = 2;
+}
+
+// client sends jobID to server to request list of tokens to work on
+// client requests up to batch_size number of tokens but may receive less
+message JobID {
+    string ID = 1;
+    string key = 2;
+    int32 batch_size = 3;
+}
+
+// empty is like null, but don't substitute nil pointer for it
+message Empty {}
+
+// server sends acknowledgement for a variety of client calls
+message Ack {
+    int32 n = 1;
+    bool status = 2;
+}
+
+// these are list of calls client can make
+service Tokens {
+    // client initiates Get() to request a list of tokens
+    rpc Get(JobID) returns (Data) {}
+
+    // client calls Done() acknowledging that the job is done
+    rpc Done(JobID) returns (Ack) {}
+
+    // client calls Reset() to reinit the server meta-data and book keeping state
+    rpc Reset(Empty) returns (Ack) {}
+
+    // client requests server to Rescan() the folder to repopulate list of tokens
+    rpc Rescan(Empty) returns (Ack) {}
+
+    // client requests server to shuffle the token list
+    rpc Shuffle(Empty) returns (Ack) {}
+
+    // client requests server the spit out list of tokens regardless of jobID and other meta-data
+    rpc Show(Empty) returns (Data) {}
+
+    // client requests job que status
+    rpc HeartBeat(JobID) returns (Ack) {}
+}
